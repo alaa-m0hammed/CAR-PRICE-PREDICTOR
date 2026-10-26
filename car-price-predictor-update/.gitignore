@@ -1,0 +1,10 @@
+.venv/
+.venv-1/
+venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.vercel/
+.ipynb_checkpoints/
+.DS_Store

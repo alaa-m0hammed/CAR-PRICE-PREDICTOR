@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Car Price Estimator</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <span class="brand">
+        <span class="brand-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 16v2a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2"/>
+            <path d="M3 16h18v-4l-2-5H5l-2 5z"/>
+            <circle cx="7.5" cy="13" r=".6"/><circle cx="16.5" cy="13" r=".6"/>
+          </svg>
+        </span>
+        Car Price Estimator
+      </span>
+      <span class="tag">Linear regression model</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="intro">
+      <h1>What is your used car <span>worth?</span></h1>
+      <p>Enter the details of the car and get a price estimate from a machine learning model trained on real used-car listings.</p>
+    </section>
+
+    <div class="layout">
+      <form id="estimate-form" class="card" method="post" action="{{ url_for('predict') }}" novalidate>
+        <h2 class="card-title">Car details</h2>
+
+        <div class="grid">
+          <div class="field">
+            <label for="company">Manufacturer</label>
+            <select id="company" name="company" required data-selected="{{ values.get('company', '') }}">
+              <option value="" disabled {{ 'selected' if not values.get('company') }}>Select manufacturer</option>
+              {% for c in catalog.companies %}
+              <option value="{{ c }}" {{ 'selected' if values.get('company') == c }}>{{ c }}</option>
+              {% endfor %}
+            </select>
+            <p class="error" data-error-for="company">{{ errors.get('company', '') }}</p>
+          </div>
+
+          <div class="field">
+            <label for="name">Car model</label>
+            <select id="name" name="name" required data-selected="{{ values.get('name', '') }}" disabled>
+              <option value="" disabled selected>Select manufacturer first</option>
+            </select>
+            <p class="error" data-error-for="name">{{ errors.get('name', '') }}</p>
+          </div>
+
+          <div class="field">
+            <label for="year">Manufacturing year</label>
+            <input id="year" name="year" type="number" inputmode="numeric" required
+                   min="{{ catalog.year_min }}" max="{{ catalog.year_max }}" step="1"
+                   placeholder="e.g. {{ catalog.year_max - 4 }}" value="{{ values.get('year', '') }}">
+            <p class="hint">Between {{ catalog.year_min }} and {{ catalog.year_max }}</p>
+            <p class="error" data-error-for="year">{{ errors.get('year', '') }}</p>
+          </div>
+
+          <div class="field">
+            <label for="kms_driven">Kilometers driven</label>
+            <input id="kms_driven" name="kms_driven" type="number" inputmode="numeric" required
+                   min="0" max="{{ catalog.kms_max }}" step="1"
+                   placeholder="e.g. 45000" value="{{ values.get('kms_driven', '') }}">
+            <p class="hint">Up to {{ '{:,}'.format(catalog.kms_max) }} km</p>
+            <p class="error" data-error-for="kms_driven">{{ errors.get('kms_driven', '') }}</p>
+          </div>
+
+          <div class="field field-wide">
+            <span class="label" id="fuel-label">Fuel type</span>
+            <div class="segmented" role="radiogroup" aria-labelledby="fuel-label">
+              {% for f in catalog.fuel_types %}
+              <label class="segment">
+                <input type="radio" name="fuel_type" value="{{ f }}" required
+                       {{ 'checked' if values.get('fuel_type') == f }}>
+                <span>{{ f }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <p class="error" data-error-for="fuel_type">{{ errors.get('fuel_type', '') }}</p>
+          </div>
+        </div>
+
+        <button id="submit-btn" class="btn" type="submit">
+          <span class="btn-label">Estimate price</span>
+        </button>
+      </form>
+
+      <aside id="result" class="card result" aria-live="polite">
+        <h2 class="card-title">Estimated price</h2>
+
+        <div class="result-empty" {{ 'hidden' if prediction }}>
+          <p>Fill in the car details and press <strong>Estimate price</strong> to see the result here.</p>
+        </div>
+
+        <div class="result-value" {{ 'hidden' if not prediction }}>
+          <p class="price" id="price">{% if prediction %}{{ '{:,}'.format(prediction.value) }}{% endif %}</p>
+          <p class="warning" id="price-warning" {{ 'hidden' if not prediction or prediction.reliable }}>
+            The model returned a value at or below zero for this combination. Treat this car as outside the range the model estimates reliably.
+          </p>
+          <p class="note">Price is shown in the same currency and units as the training dataset. This is a statistical estimate, not a valuation.</p>
+        </div>
+
+        <p class="result-error" id="result-error" hidden></p>
+      </aside>
+    </div>
+
+    <section class="stats" aria-label="What the model was built from">
+      <div class="stat">
+        <p class="stat-label">Years covered</p>
+        <p class="stat-value">{{ catalog.year_min }}<i> - </i>{{ catalog.year_max }}</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Manufacturers</p>
+        <p class="stat-value">{{ catalog.companies|length }}</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Car models</p>
+        <p class="stat-value">{{ catalog.models.values()|map('length')|sum }}</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">Estimates come from a linear regression model and are indicative only.</div>
+  </footer>
+
+  <script id="catalog" type="application/json">{{ catalog|tojson }}</script>
+  <script>
+  (function () {
+    var catalog = JSON.parse(document.getElementById('catalog').textContent);
+    var form = document.getElementById('estimate-form');
+    var company = document.getElementById('company');
+    var model = document.getElementById('name');
+    var btn = document.getElementById('submit-btn');
+    var btnLabel = btn.querySelector('.btn-label');
+    var result = document.getElementById('result');
+    var emptyBox = result.querySelector('.result-empty');
+    var valueBox = result.querySelector('.result-value');
+    var priceEl = document.getElementById('price');
+    var warnEl = document.getElementById('price-warning');
+    var resultError = document.getElementById('result-error');
+
+    function fillModels(selected) {
+      var names = catalog.models[company.value] || [];
+      model.innerHTML = '';
+      var first = document.createElement('option');
+      first.value = '';
+      first.disabled = true;
+      first.selected = true;
+      first.textContent = names.length ? 'Select car model' : 'Select manufacturer first';
+      model.appendChild(first);
+      names.forEach(function (n) {
+        var o = document.createElement('option');
+        o.value = n;
+        o.textContent = n;
+        if (n === selected) { o.selected = true; first.selected = false; }
+        model.appendChild(o);
+      });
+      model.disabled = names.length === 0;
+    }
+
+    function setErrors(errors) {
+      form.querySelectorAll('[data-error-for]').forEach(function (el) {
+        el.textContent = (errors && errors[el.dataset.errorFor]) || '';
+      });
+    }
+
+    function clientValidate() {
+      var errors = {};
+      var d = new FormData(form);
+      if (!d.get('company')) errors.company = 'Choose a manufacturer from the list.';
+      if (!d.get('name')) errors.name = 'Choose a car model.';
+      var y = parseInt(d.get('year'), 10);
+      if (isNaN(y) || y < catalog.year_min || y > catalog.year_max)
+        errors.year = 'Enter a year between ' + catalog.year_min + ' and ' + catalog.year_max + '.';
+      var k = parseInt(d.get('kms_driven'), 10);
+      if (isNaN(k) || k < 0 || k > catalog.kms_max)
+        errors.kms_driven = 'Enter kilometers driven between 0 and ' + catalog.kms_max.toLocaleString('en-US') + '.';
+      if (!d.get('fuel_type')) errors.fuel_type = 'Choose a fuel type.';
+      return errors;
+    }
+
+    function showResult(prediction) {
+      resultError.hidden = true;
+      emptyBox.hidden = true;
+      valueBox.hidden = false;
+      priceEl.textContent = prediction.value.toLocaleString('en-US');
+      warnEl.hidden = prediction.reliable;
+    }
+
+    function showFailure(message) {
+      valueBox.hidden = true;
+      emptyBox.hidden = true;
+      resultError.textContent = message;
+      resultError.hidden = false;
+    }
+
+    company.addEventListener('change', function () { fillModels(''); });
+    fillModels(model.dataset.selected);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var errors = clientValidate();
+      setErrors(errors);
+      if (Object.keys(errors).length) return;
+
+      btn.disabled = true;
+      btnLabel.textContent = 'Estimating...';
+
+      fetch(form.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'fetch' },
+        body: new FormData(form)
+      })
+        .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+        .then(function (res) {
+          if (res.body.ok) {
+            setErrors({});
+            showResult(res.body.prediction);
+          } else {
+            setErrors(res.body.errors);
+            showFailure('Please fix the highlighted fields.');
+          }
+        })
+        .catch(function () { showFailure('Could not reach the server. Please try again.'); })
+        .finally(function () {
+          btn.disabled = false;
+          btnLabel.textContent = 'Estimate price';
+        });
+    });
+  })();
+  </script>
+</body>
+</html>

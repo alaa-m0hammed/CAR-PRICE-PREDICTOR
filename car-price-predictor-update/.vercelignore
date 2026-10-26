@@ -1,0 +1,12 @@
+.venv
+.venv-1
+venv
+.idea
+.git
+__pycache__
+.ipynb_checkpoints
+*.ipynb
+quikr_car.csv
+docs
+README.md
+LICENSE

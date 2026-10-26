@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 250" width="1200" height="250" role="img" aria-labelledby="t d">
+  <title id="t">How the project works</title>
+  <desc id="d">Five steps: the Quikr dataset, cleaning, the linear regression model, the Flask API, and the web interface. A dot travels through the pipeline and each step lights up in turn.</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .node { fill: #1a1a1d; stroke: #34343a; stroke-width: 2; animation: glow 5s infinite; }
+    .n1 { animation-delay: 0.2s; }
+    .n2 { animation-delay: 1.25s; }
+    .n3 { animation-delay: 2.3s; }
+    .n4 { animation-delay: 3.35s; }
+    .n5 { animation-delay: 4.4s; }
+    @keyframes glow {
+      0% { stroke: #34343a; }
+      6% { stroke: #e05a5a; }
+      18% { stroke: #34343a; }
+      100% { stroke: #34343a; }
+    }
+    .flow { stroke: #6b6b72; stroke-width: 2.5; stroke-dasharray: 6 6; animation: flow 0.6s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -12; } }
+    .dot { animation: travel 5s linear infinite; }
+    @keyframes travel {
+      0% { transform: translateX(0); opacity: 0; }
+      4% { opacity: 1; }
+      96% { opacity: 1; }
+      100% { transform: translateX(1100px); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+      .dot { opacity: 0; }
+    }
+  </style>
+
+  <rect width="1200" height="250" rx="20" fill="#0e0e10"/>
+  <line x1="50" y1="96" x2="1150" y2="96" stroke="#26262b" stroke-width="2"/>
+  <circle class="dot" cx="50" cy="96" r="5" fill="#e05a5a"/>
+
+  <g stroke="#6b6b72" stroke-width="2.5">
+    <line class="flow" x1="236" y1="96" x2="270" y2="96"/>
+    <line class="flow" x1="466" y1="96" x2="500" y2="96"/>
+    <line class="flow" x1="696" y1="96" x2="730" y2="96"/>
+    <line class="flow" x1="926" y1="96" x2="960" y2="96"/>
+  </g>
+  <g fill="#6b6b72">
+    <polygon points="272,96 264,91 264,101"/>
+    <polygon points="502,96 494,91 494,101"/>
+    <polygon points="732,96 724,91 724,101"/>
+    <polygon points="962,96 954,91 954,101"/>
+  </g>
+
+  <rect class="node n1" x="50" y="36" width="180" height="120" rx="16"/>
+  <text x="68" y="64" font-size="13" font-weight="800" fill="#e05a5a">01</text>
+  <text x="68" y="90" font-size="20" font-weight="700" fill="#ffffff">Quikr dataset</text>
+  <text x="68" y="114" font-size="13.5" fill="#b4b4ba">quikr_car.csv</text>
+  <text x="68" y="132" font-size="13.5" fill="#b4b4ba">892 listings</text>
+
+  <rect class="node n2" x="280" y="36" width="180" height="120" rx="16"/>
+  <text x="298" y="64" font-size="13" font-weight="800" fill="#e05a5a">02</text>
+  <text x="298" y="90" font-size="20" font-weight="700" fill="#ffffff">Cleaning</text>
+  <text x="298" y="114" font-size="13.5" fill="#b4b4ba">716 rows kept</text>
+  <text x="298" y="132" font-size="13.5" fill="#b4b4ba">254 car names</text>
+
+  <rect class="node n3" x="510" y="36" width="180" height="120" rx="16"/>
+  <text x="528" y="64" font-size="13" font-weight="800" fill="#e05a5a">03</text>
+  <text x="528" y="90" font-size="20" font-weight="700" fill="#ffffff">Model</text>
+  <text x="528" y="114" font-size="13.5" fill="#b4b4ba">Linear regression</text>
+  <text x="528" y="132" font-size="13.5" fill="#b4b4ba">one-hot, log price</text>
+
+  <rect class="node n4" x="740" y="36" width="180" height="120" rx="16"/>
+  <text x="758" y="64" font-size="13" font-weight="800" fill="#e05a5a">04</text>
+  <text x="758" y="90" font-size="20" font-weight="700" fill="#ffffff">Flask API</text>
+  <text x="758" y="114" font-size="13.5" fill="#b4b4ba">POST /predict</text>
+  <text x="758" y="132" font-size="13.5" fill="#b4b4ba">input validation</text>
+
+  <rect class="node n5" x="970" y="36" width="180" height="120" rx="16"/>
+  <text x="988" y="64" font-size="13" font-weight="800" fill="#e05a5a">05</text>
+  <text x="988" y="90" font-size="20" font-weight="700" fill="#ffffff">Web UI</text>
+  <text x="988" y="114" font-size="13.5" fill="#b4b4ba">form, instant</text>
+  <text x="988" y="132" font-size="13.5" fill="#b4b4ba">price estimate</text>
+
+  <path d="M50 178 L50 188 L690 188 L690 178" fill="none" stroke="#4a4a50" stroke-width="2"/>
+  <text x="370" y="214" font-size="14" fill="#b4b4ba" text-anchor="middle">quikr_predictor XY.ipynb</text>
+  <path d="M740 178 L740 188 L1150 188 L1150 178" fill="none" stroke="#4a4a50" stroke-width="2"/>
+  <text x="945" y="214" font-size="14" fill="#b4b4ba" text-anchor="middle">app.py, templates/, static/</text>
+</svg>
